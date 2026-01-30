@@ -1,21 +1,17 @@
 "use client";
 
-import { motion } from "framer-motion";
-import { LayoutTemplate, Palette, Moon, Sun, ArrowRight } from "lucide-react";
-import { useState, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Upload, ArrowRight, Check, Code, Database, Server, FileJson, Lock, User as UserIcon, Cloud, FileText, Activity, LayoutDashboard, BrainCircuit, CreditCard, TestTube } from "lucide-react";
+import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/Button";
-import { Input } from "@/components/ui/Input";
-import { useForm } from "react-hook-form";
-import { z } from "zod";
-import { zodResolver } from "@hookform/resolvers/zod";
-
-const schema = z.object({
-  email: z.string().email({ message: "Please enter a valid email address" }),
-});
-
-type FormData = z.infer<typeof schema>;
+import { Textarea } from "@/components/ui/Textarea";
+import { Sidebar } from "@/components/layout/Sidebar";
+import { Topbar } from "@/components/layout/Topbar";
 
 export default function Home() {
+  const [step, setStep] = useState(1);
+  const [isLoading, setIsLoading] = useState(false);
+  const [fileName, setFileName] = useState("");
   const [theme, setTheme] = useState("light");
   const [isLoaded, setIsLoaded] = useState(false);
 
@@ -33,7 +29,6 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
-    // Apply theme only after loading to prevent overwriting localStorage with initial default
     if (isLoaded) {
       document.documentElement.setAttribute("data-theme", theme);
       localStorage.setItem("theme", theme);
@@ -44,222 +39,321 @@ export default function Home() {
     setTheme((prev) => (prev === "light" ? "dark" : "light"));
   };
 
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.1,
-      },
-    },
+  // Form State
+  const [formData, setFormData] = useState({
+    description: "",
+    language: "typescript",
+    database: "supabase",
+    features: [] as string[],
+  });
+
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setFileName(file.name);
+    }
   };
 
-  const itemVariants = {
-    hidden: { y: 20, opacity: 0 },
-    visible: {
-      y: 0,
-      opacity: 1,
-    },
+  const toggleFeature = (feature: string) => {
+    setFormData(prev => ({
+      ...prev,
+      features: prev.features.includes(feature)
+        ? prev.features.filter(f => f !== feature)
+        : [...prev.features, feature]
+    }));
+  };
+
+  const handleGenerate = async () => {
+    setIsLoading(true);
+    await new Promise(resolve => setTimeout(resolve, 3000));
+    setIsLoading(false);
+    alert("Backend generation started! (Simulation)");
+  };
+
+  const handleNewProject = () => {
+    setStep(1);
+    setFileName("");
+    setFormData({
+      description: "",
+      language: "typescript",
+      database: "supabase",
+      features: [],
+    });
   };
 
   return (
-    <main className="min-h-screen w-full bg-background text-text transition-colors duration-300">
-      <nav className="fixed top-0 w-full p-6 flex justify-between items-center z-50 backdrop-blur-sm bg-background/80 border-b border-secondary">
-        <div className="text-2xl font-bold text-primary flex items-center gap-2">
-          <Palette className="w-8 h-8" />
-          <span>Core-X</span>
-        </div>
-        <button
-          onClick={toggleTheme}
-          className="p-2 rounded-full bg-secondary text-primary hover:bg-accent hover:text-white transition-all duration-300"
-        >
-          {theme === "light" ? <Moon size={24} /> : <Sun size={24} />}
-        </button>
-      </nav>
+    <div className="flex h-screen bg-background text-text transition-colors duration-300 overflow-hidden">
+      <Sidebar onNewProject={handleNewProject} />
 
-      <motion.div
-        variants={containerVariants}
-        initial="hidden"
-        animate="visible"
-        className="pt-32 px-6 max-w-7xl mx-auto"
-      >
-        <section className="text-center mb-20">
-          <motion.h1
-            variants={itemVariants}
-            className="text-6xl md:text-8xl font-black mb-6 tracking-tight"
-          >
-            Your AI <span className="text-primary">Backend</span> Architect
-          </motion.h1>
-          <motion.p
-            variants={itemVariants}
-            className="text-xl md:text-2xl text-text/80 max-w-3xl mx-auto mb-10"
-          >
-            Generate secure, production-ready backend code in seconds.
-            Powered by <span className="font-bold text-accent">Gemini</span>.
-            Stop wasting time on boilerplate and focus on business logic.
-          </motion.p>
-          <motion.div variants={itemVariants} className="flex justify-center gap-4">
-            <Button variant="primary" size="lg">
-              Start Generating <ArrowRight size={20} className="ml-2" />
-            </Button>
-            <Button variant="secondary" size="lg">
-              View Examples
-            </Button>
-          </motion.div>
-        </section>
+      {/* Main Content */}
+      <div className="flex-1 flex flex-col min-w-0">
+        <Topbar theme={theme} toggleTheme={toggleTheme} />
 
-        <section className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-20">
-          {[
-            {
-              title: "Secure by Design",
-              icon: <LayoutTemplate className="w-8 h-8 mb-4 text-primary" />,
-              desc: "OWASP-compliant code generation with automatic input validation and sanitization built-in.",
-            },
-            {
-              title: "Powered by Gemini",
-              icon: <Palette className="w-8 h-8 mb-4 text-primary" />, // Using Palette temporarily, ideally use a Brain or Sparkles icon
-              desc: "Leveraging Google's advanced AI to understand your schema and requirements deeply.",
-            },
-            {
-              title: "Production Ready",
-              icon: <Moon className="w-8 h-8 mb-4 text-primary" />, // Using Moon temporarily
-              desc: "Clean, modular, and documented code structures that act as a solid foundation for scale.",
-            },
-          ].map((card, idx) => (
-            <motion.div
-              key={idx}
-              variants={itemVariants}
-              className="bg-secondary/20 p-8 rounded-3xl relative overflow-hidden group hover:bg-secondary/30 transition-colors"
-            >
-              <div className="relative z-10">
-                {card.icon}
-                <h3 className="text-2xl font-bold mb-3">{card.title}</h3>
-                <p className="opacity-90 leading-relaxed">{card.desc}</p>
-              </div>
-              <div className="absolute -bottom-10 -right-10 w-40 h-40 bg-primary/10 rounded-full blur-3xl group-hover:scale-150 transition-transform duration-500" />
-            </motion.div>
-          ))}
-        </section>
+        {/* Scrollable Content */}
+        <main className="flex-1 overflow-y-auto p-4 md:p-8 relative">
+          <div className="max-w-4xl mx-auto h-full">
 
-        <section className="bg-secondary/30 rounded-[3rem] p-12 mb-20">
-          <div className="flex flex-col md:flex-row items-center gap-12">
-            <div className="flex-1">
-              <motion.div
-                initial={{ rotate: -2 }}
-                whileHover={{ rotate: 0, scale: 1.02 }}
-                className="bg-background border-2 border-secondary p-8 rounded-2xl shadow-xl font-mono text-sm overflow-hidden"
-              >
-                <div className="flex gap-2 mb-6 border-b border-secondary pb-4">
-                  <div className="w-3 h-3 rounded-full bg-red-400" />
-                  <div className="w-3 h-3 rounded-full bg-yellow-400" />
-                  <div className="w-3 h-3 rounded-full bg-green-400" />
-                  <span className="ml-2 text-xs opacity-50">server.ts</span>
-                </div>
-                <div className="space-y-2 text-text/80">
-                  <p><span className="text-primary">import</span> express <span className="text-primary">from</span> &apos;express&apos;;</p>
-                  <p><span className="text-primary">const</span> app = express();</p>
-                  <p className="text-accent">{`// Generated Secure Endpoint`}</p>
-                  <p>app.post(<span className="text-green-600">&apos;/api/v1/auth&apos;</span>, <span className="text-primary">async</span> (req, res) ={">"} {`{`}</p>
-                  <p className="pl-4">  <span className="text-primary">try</span> {`{`}</p>
-                  <p className="pl-8">    <span className="text-primary">const</span> {`{ email }`} = schema.parse(req.body);</p>
-                  <p className="pl-8">    <span className="text-accent">await</span> AuthService.login(email);</p>
-                  <p className="pl-4">  {`}`}</p>
-                  <p>{`}`});</p>
-                </div>
-              </motion.div>
+            {/* Header Text inside Main - Simplified from previous */}
+            <div className="text-center mb-8">
+              <span className="text-primary font-bold tracking-widest uppercase text-xs mb-2 block">AI Architect</span>
+              <h1 className="text-3xl md:text-4xl font-black mb-2">Build Your Backend</h1>
             </div>
-            <div className="flex-1 space-y-6">
-              <h2 className="text-4xl font-bold">Code that writes itself</h2>
-              <p className="text-lg text-text/70">
-                Define your data models and requirements, and let Core-X Architect handle the heavy lifting.
-                We generate the routing, controllers, services, and database schemas for you.
-              </p>
-              <ul className="space-y-4">
-                {[
-                  "Node.js & Python Support",
-                  "Auto-generated Swagger Docs",
-                  "Docker Configuration",
-                  "CI/CD Pipelines"
-                ].map((item, i) => (
-                  <motion.li
-                    key={i}
+
+            {/* Wizard Container - Reused */}
+            <div className="bg-secondary/20 rounded-[2rem] p-6 md:p-10 relative overflow-hidden min-h-[500px]">
+              {/* Progress Bar */}
+              <div className="absolute top-0 left-0 w-full h-1 bg-secondary/30">
+                <motion.div
+                  className="h-full bg-primary"
+                  initial={{ width: "0%" }}
+                  animate={{ width: step === 1 ? "50%" : "100%" }}
+                  transition={{ duration: 0.5 }}
+                />
+              </div>
+
+              <AnimatePresence mode="wait">
+                {step === 1 ? (
+                  <motion.div
+                    key="step1"
                     initial={{ opacity: 0, x: -20 }}
-                    whileInView={{ opacity: 1, x: 0 }}
-                    transition={{ delay: i * 0.1 }}
-                    className="flex items-center gap-3 text-lg font-medium"
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: 20 }}
+                    className="space-y-6"
                   >
-                    <div className="p-1 rounded-full bg-accent/20 text-accent">
-                      <LayoutTemplate size={16} />
+                    <div className="space-y-1">
+                      <h2 className="text-xl font-bold">1. Project Overview</h2>
+                      <p className="text-text/70 text-sm">Define your project requirements.</p>
                     </div>
-                    {item}
-                  </motion.li>
-                ))}
-              </ul>
+
+                    <div className="space-y-6">
+                      <div>
+                        <Textarea
+                          label="Project Description"
+                          placeholder="Describe your backend requirements..."
+                          value={formData.description}
+                          onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                          className="bg-background min-h-[160px]"
+                        />
+                        <div className="flex flex-wrap gap-2 mt-3 pl-1">
+                          <span className="text-xs text-text/50 font-medium py-1">Try examples:</span>
+                          {[
+                            { label: "E-commerce", text: "A full-featured e-commerce platform with product management, shopping cart, user authentication, and payment gateway integration." },
+                            { label: "Chat App", text: "Real-time chat application supporting private messaging, group channels, file sharing, and user presence indicators." },
+                            { label: "LMS System", text: "Learning Management System with student enrollment, course content management, quizzes, and progress tracking." }
+                          ].map((item) => (
+                            <button
+                              key={item.label}
+                              className="text-xs px-3 py-1 rounded-full bg-primary/10 text-primary hover:bg-primary/20 transition-colors font-medium border border-primary/20"
+                              onClick={() => setFormData(prev => ({ ...prev, description: item.text }))}
+                            >
+                              {item.label}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
+                      <div className="space-y-2">
+                        <label className="text-sm font-semibold text-text opacity-90">
+                          Data Structure / Schema
+                        </label>
+                        <div
+                          onClick={() => fileInputRef.current?.click()}
+                          className="border-2 border-dashed border-primary/30 rounded-xl p-8 hover:bg-primary/5 hover:border-primary transition-all cursor-pointer group text-center bg-background/50"
+                        >
+                          <input
+                            type="file"
+                            ref={fileInputRef}
+                            className="hidden"
+                            accept=".json,.sql,.db,image/*"
+                            onChange={handleFileChange}
+                          />
+                          <div className="h-12 w-12 bg-secondary rounded-full flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition-transform">
+                            {fileName ? <FileJson className="text-primary w-6 h-6" /> : <Upload className="text-primary w-6 h-6" />}
+                          </div>
+                          {fileName ? (
+                            <div>
+                              <p className="font-bold text-primary">{fileName}</p>
+                              <p className="text-xs text-text/50">Click to replace</p>
+                            </div>
+                          ) : (
+                            <div>
+                              <p className="font-bold text-sm">Upload Schema (JSON/SQL) or Paste DB Diagram</p>
+                              <p className="text-xs text-text/50 mt-1">Supports Gemini Vision for diagram images</p>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex justify-end pt-2">
+                      <Button
+                        size="md"
+                        onClick={() => setStep(2)}
+                        disabled={!formData.description && !fileName}
+                      >
+                        Continue <ArrowRight className="ml-2 w-4 h-4" />
+                      </Button>
+                    </div>
+                  </motion.div>
+                ) : (
+                  <motion.div
+                    key="step2"
+                    initial={{ opacity: 0, x: 20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: -20 }}
+                    className="space-y-6"
+                  >
+                    <div className="space-y-1">
+                      <h2 className="text-xl font-bold">2. Stack Configuration</h2>
+                      <p className="text-text/70 text-sm">Select your tech stack.</p>
+                    </div>
+
+                    {/* Language Selection */}
+                    <div className="space-y-3">
+                      <h3 className="font-semibold text-sm flex items-center gap-2">
+                        <Code size={16} /> Language
+                      </h3>
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                        <SelectCard
+                          label="TypeScript"
+                          active={formData.language === "typescript"}
+                          onClick={() => setFormData({ ...formData, language: "typescript" })}
+                        />
+                        <SelectCard
+                          label="Python"
+                          isComingSoon
+                        />
+                        <SelectCard
+                          label="Go"
+                          isComingSoon
+                        />
+                      </div>
+                    </div>
+
+                    {/* Database Selection */}
+                    <div className="space-y-3">
+                      <h3 className="font-semibold text-sm flex items-center gap-2">
+                        <Database size={16} /> Database
+                      </h3>
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                        <SelectCard
+                          label="Supabase"
+                          active={formData.database === "supabase"}
+                          onClick={() => setFormData({ ...formData, database: "supabase" })}
+                        />
+                        <SelectCard
+                          label="PostgreSQL"
+                          isComingSoon
+                        />
+                        <SelectCard
+                          label="MongoDB"
+                          isComingSoon
+                        />
+                      </div>
+                    </div>
+
+                    {/* Features Selection */}
+                    <div className="space-y-3">
+                      <h3 className="font-semibold text-sm flex items-center gap-2">
+                        <Server size={16} /> Features
+                      </h3>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        {[
+                          { id: "Auth (JWT)", label: "Auth (JWT)", icon: <Lock size={16} className="text-primary" />, desc: "Generate login, signup & auth endpoints" },
+                          { id: "User Profiles", label: "User Profiles", icon: <UserIcon size={16} className="text-primary" />, desc: "Generate user profile endpoints" },
+                          { id: "Payments", label: "Payment Gateways", icon: <CreditCard size={16} className="text-primary" />, desc: "Add Stripe, PayPal & payment gateways" },
+                          { id: "File Storage", label: "File Storage", icon: <Cloud size={16} className="text-primary" />, desc: "Create cloud storage service for files" },
+                          { id: "API Documentation (Swagger)", label: "Swagger Docs", icon: <FileText size={16} className="text-primary" />, desc: "Add documentation to understand the project" },
+                          { id: "Admin Panel", label: "Admin Dashboard", icon: <LayoutDashboard size={16} className="text-primary" />, desc: "Add dashboard to control the server" },
+                          { id: "Real-time Events", label: "Real-time Events", icon: <Activity size={16} className="text-primary" />, desc: "WebSockets & Subscriptions", comingSoon: true },
+                          { id: "Vector Search", label: "Vector Search (AI)", icon: <BrainCircuit size={16} className="text-accent" />, desc: "Embeddings & Semantic Search" },
+                          { id: "Unit Testing", label: "Unit Testing", icon: <TestTube size={16} className="text-primary" />, desc: "Create unit tests for the project", comingSoon: true },
+                        ].map((feat) => (
+                          <div
+                            key={feat.id}
+                            onClick={feat.comingSoon ? undefined : () => toggleFeature(feat.id)}
+                            className={`p-4 rounded-xl border flex flex-col gap-2 transition-all relative overflow-hidden ${feat.comingSoon
+                              ? "opacity-60 cursor-not-allowed bg-secondary/10 border-transparent grayscale"
+                              : formData.features.includes(feat.id)
+                                ? "border-primary bg-primary/5 shadow-sm cursor-pointer"
+                                : "border-transparent bg-background/60 hover:bg-background/80 cursor-pointer"
+                              }`}
+                          >
+                            <div className="flex items-center justify-between w-full">
+                              <div className="flex items-center gap-2 font-bold text-sm">
+                                {feat.icon}
+                                {feat.label}
+                              </div>
+                              {feat.comingSoon ? (
+                                <span className="text-[10px] font-bold bg-secondary px-2 py-0.5 rounded-full uppercase tracking-wider opacity-80">Soon</span>
+                              ) : (
+                                formData.features.includes(feat.id) && <Check size={16} className="text-primary" />
+                              )}
+                            </div>
+                            <p className="text-xs text-text/60 pl-6">{feat.desc}</p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="flex justify-between items-center pt-6">
+                      <Button variant="ghost" onClick={() => setStep(1)} size="sm">
+                        Back
+                      </Button>
+                      <Button
+                        size="md"
+                        onClick={handleGenerate}
+                        isLoading={isLoading}
+                        className="min-w-[150px]"
+                      >
+                        {!isLoading && "Analyze Blueprint"}
+                      </Button>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
           </div>
-        </section>
-
-        <NewsletterSection />
-      </motion.div>
-    </main>
+        </main>
+      </div>
+    </div>
   );
 }
 
-function NewsletterSection() {
-  const {
-    register,
-    handleSubmit,
-    formState: { errors, isSubmitting, isSubmitSuccessful },
-    reset,
-  } = useForm<FormData>({
-    resolver: zodResolver(schema),
-  });
-
-  const onSubmit = async (data: FormData) => {
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-    console.log(data);
-    reset();
-  };
-
+function SelectCard({ label, active, isComingSoon, onClick }: { label: string, active?: boolean, isComingSoon?: boolean, onClick?: () => void }) {
   return (
-    <section className="mb-20 text-center max-w-2xl mx-auto">
-      <h2 className="text-3xl font-bold mb-4">Stay Updated</h2>
-      <p className="text-text/70 mb-8">
-        Join our newsletter to receive the latest updates about Core-X features.
-        Powered by <code className="bg-secondary px-1 rounded">react-hook-form</code> and <code className="bg-secondary px-1 rounded">zod</code>.
-      </p>
-
-      {isSubmitSuccessful ? (
-        <motion.div
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          className="bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-200 p-4 rounded-xl font-medium"
-        >
-          Thanks for subscribing! We&apos;ll be in touch.
-        </motion.div>
-      ) : (
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-          <div className="flex flex-col sm:flex-row gap-4 items-start">
-            <div className="flex-1 w-full">
-              <Input
-                {...register("email")}
-                placeholder="Enter your email"
-                error={errors.email?.message}
-                className="bg-secondary/30 border-2"
-              />
-            </div>
-            <Button
-              type="submit"
-              isLoading={isSubmitting}
-              className="w-full sm:w-auto whitespace-nowrap"
-              size="lg"
-            >
-              Subscribe
-            </Button>
-          </div>
-        </form>
+    <div
+      onClick={isComingSoon ? undefined : onClick}
+      className={`
+        relative p-6 rounded-2xl border-2 transition-all duration-200 flex flex-col items-center justify-center gap-2 min-h-[120px]
+        ${isComingSoon
+          ? "opacity-60 cursor-not-allowed bg-secondary/10 border-transparent grayscale"
+          : "cursor-pointer bg-background"
+        }
+        ${active
+          ? "border-primary shadow-[0_0_20px_rgba(var(--primary),0.3)] scale-[1.02]"
+          : "border-transparent hover:border-primary/30"
+        }
+      `}
+    >
+      {isComingSoon && (
+        <span className="absolute top-2 right-2 text-[10px] font-bold bg-secondary px-2 py-1 rounded-full uppercase tracking-wider">
+          Soon
+        </span>
       )}
-    </section>
+      <span className={`font-bold text-lg ${active ? "text-primary" : "text-text"}`}>
+        {label}
+      </span>
+      {active && (
+        <motion.div
+          layoutId="active-check"
+          className="absolute top-2 right-2 text-primary"
+        >
+          <Check size={16} />
+        </motion.div>
+      )}
+    </div>
   );
 }
